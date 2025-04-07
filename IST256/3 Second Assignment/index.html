@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Challenge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .btn-big {
+            font-size: 24px;
+            padding: 20px 40px;
+            width: 300px;
+            margin: 20px auto;
+        }
+        .result {
+            margin-top: 30px;
+        }
+        .summary {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>3-Second Challenge</h1>
+    <button id="startBtn" class="btn btn-primary btn-big">Start</button>
+
+    <div class="result">
+        <p id="elapsedTime"></p>
+        <p id="feedback" class="fw-bold"></p>
+    </div>
+
+    <div class="summary">
+        <button class="btn btn-info" id="showSummaryBtn">Show Summary</button>
+        <div id="summary" class="d-none">
+            <h5>Summary:</h5>
+            <ul id="attemptList"></ul>
+            <h5>Stats:</h5>
+            <p id="overallStats"></p>
+        </div>
+    </div>
+
+    <div>
+        <canvas id="attemptChart" width="400" height="200"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<script>
+    const target = 3000;
+    let startTime, endTime;
+    let attempts = [];
+    let chartData = [];
+
+    const startBtn = document.getElementById('startBtn');
+    const elapsedTimeElement = document.getElementById('elapsedTime');
+    const feedbackElement = document.getElementById('feedback');
+    const attemptList = document.getElementById('attemptList');
+    const overallStats = document.getElementById('overallStats');
+    const showSummaryBtn = document.getElementById('showSummaryBtn');
+    const summaryDiv = document.getElementById('summary');
+
+    startBtn.addEventListener('click', function() {
+        if (startBtn.textContent === 'Start') {
+            startBtn.textContent = 'Stop';
+            startTime = new Date().getTime();
+        } else if (startBtn.textContent === 'Stop') {
+            endTime = new Date().getTime();
+            const elapsed = (endTime - startTime) / 1000;
+            const result = {
+                startTime,
+                endTime,
+                elapsed
+            };
+            attempts.push(result);
+            chartData.push(elapsed);
+
+            if (Math.abs(elapsed - 3) <= 0.2) {
+                feedbackElement.textContent = 'Great!';
+                feedbackElement.style.color = 'blue';
+            } else if (Math.abs(elapsed - 3) <= 0.5) {
+                feedbackElement.textContent = 'Not bad!';
+                feedbackElement.style.color = 'yellow';
+            } else {
+                feedbackElement.textContent = 'Try again!';
+                feedbackElement.style.color = 'red';
+            }
+
+            startBtn.textContent = 'Start';
+            elapsedTimeElement.textContent = `Time: ${elapsed.toFixed(3)}s`;
+
+            updateSummary();
+            updateChart();
+        }
+    });
+
+    function updateSummary() {
+        attemptList.innerHTML = '';
+        attempts.forEach((attempt, index) => {
+            const li = document.createElement('li');
+            li.textContent = `Attempt ${index + 1}: ${new Date(attempt.startTime).toLocaleTimeString()} - ${new Date(attempt.endTime).toLocaleTimeString()} : ${attempt.elapsed.toFixed(3)}s`;
+            attemptList.appendChild(li);
+        });
+
+        const min = Math.min(...attempts.map(a => a.elapsed));
+        const max = Math.max(...attempts.map(a => a.elapsed));
+        const avg = attempts.reduce((acc, a) => acc + a.elapsed, 0) / attempts.length;
+
+        overallStats.textContent = `Attempts: ${attempts.length}, Min: ${min.toFixed(3)}s, Max: ${max.toFixed(3)}s, Avg: ${avg.toFixed(3)}s`;
+    }
+
+    showSummaryBtn.addEventListener('click', () => {
+        summaryDiv.classList.toggle('d-none');
+    });
+
+    function updateChart() {
+        const ctx = document.getElementById('attemptChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: chartData.length }, (_, i) => i + 1),
+                datasets: [{
+                    label: 'Elapsed Time',
+                    data: chartData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5
+                    }
+                }
+            }
+        });
+    }
+
+</script>
+</body>
+</html>
